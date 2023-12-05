@@ -1,0 +1,284 @@
+
+--Query 1:retrieve a list of employers, including first and last
+--names, and the first and last names of their immediate
+--managers
+
+SELECT
+    emp.employeeId
+  , emp.firstName as employee_firstname
+  , emp.lastName as employee_lastname
+  , man.firstName as manager_firstname
+  , man.lastName as manager_lastname
+FROM
+  employee emp
+LEFT JOIN
+  employee man
+    ON
+      emp.managerId=man.employeeId
+;
+
+--Query 2:retrieve a list of salespeople with zero sales
+SELECT
+    emp.employeeId
+  , emp.firstName
+  , emp.lastName
+  , emp.title
+FROM
+  employee emp
+LEFT JOIN
+  sales
+    ON
+      emp.employeeId=sales.employeeId
+WHERE
+  sales.salesId IS NULL
+    AND
+      emp.title = 'Sales Person'
+;
+
+--Query 3:
+--retrive list of all sales and all customers even if data has
+--been removed
+SELECT
+    cust.firstName
+  , cust.lastName
+  , cust.email
+  , sls.salesAmount
+FROM
+  customer cust
+FULL OUTER JOIN
+  sales sls
+    ON
+      cust.customerId=sls.customerId
+;
+
+--Query 4:
+--retrieve number of cars sold by each employee
+--employeeid, first and last names, and number of cars sold
+SELECT
+    emp.employeeId
+  , emp.firstName
+  , emp.lastName
+  , COUNT(*) as no_cars_sold
+FROM
+  sales sls
+JOIN
+  employee emp
+    ON
+      sls.employeeId=emp.employeeId
+GROUP BY
+  emp.employeeId, emp.firstName, emp.lastName
+ORDER BY
+  no_cars_sold DESC
+;
+
+--Query 5:
+--list the least and most expensive car sold by each
+--employee this year
+SELECT
+    emp.firstName
+  , emp.lastName
+  , max(salesAmount) as max_sales
+  , min(salesAmount) as min_sales
+  , sls.soldDate
+FROM
+  sales sls
+JOIN
+  employee emp
+    ON
+      sls.employeeId=emp.employeeId
+WHERE
+  sls.soldDate >= date('now','start of year')
+GROUP BY
+  emp.firstName
+;
+
+--query 6:list employees who have made more than five
+--sales this year
+SELECT
+    emp.firstName
+  , emp.lastName
+  , COUNT(*) as number_of_cars_sold
+FROM
+  sales sls
+JOIN
+  employee emp
+    ON
+      sls.employeeId=emp.employeeId
+WHERE
+  sls.soldDate >= date('now','start of year')
+GROUP BY
+  emp.employeeId
+HAVING
+  COUNT(*)>=5
+ORDER BY
+  number_of_cars_sold DESC
+;
+
+--query 7:create a report showing the total sales per year
+with yearly_sales as (
+SELECT
+    strftime('%Y',soldDate) as year_of_sale
+  , sum(salesAmount) as total_sales
+FROM
+  sales
+GROUP BY
+  soldDate
+)
+
+SELECT
+    year_of_sale
+  , round(sum(total_sales),2) as yearly_revenue
+FROM
+  yearly_sales
+GROUP BY
+  year_of_sale
+;
+
+--query 8: create a report that shows the amount of sales per employee for each month in 2021
+--first name, last name, column along top will represent a month,values in grid will show total sales for that month
+--CASE statements
+
+WITH monthly_employee_sales as(
+SELECT
+    emp.firstName
+  , emp.lastName
+  , strftime('%m',sls.soldDate) as month_of_sale
+  , sum(sls.salesAmount) as total_sales
+FROM
+  sales sls
+JOIN
+  employee emp
+    ON
+      sls.employeeId=emp.employeeId
+WHERE
+  sls.soldDate BETWEEN '2021-01-01' AND '2021-12-31'
+GROUP BY
+  month_of_sale, emp.firstName, emp.lastName
+order BY firstName, lastName
+)
+
+SELECT
+    firstName
+  , lastName
+  , sum(CASE WHEN month_of_sale = '01' THEN total_sales END) AS 'January'
+  , sum(CASE WHEN month_of_sale = '02' THEN total_sales END) AS 'February'
+  , sum(CASE WHEN month_of_sale = '03' THEN total_sales END) AS 'March'
+  , sum(CASE WHEN month_of_sale = '04' THEN total_sales END) AS 'April'
+  , sum(CASE WHEN month_of_sale = '05' THEN total_sales END) AS 'May'
+  , sum(CASE WHEN month_of_sale = '06' THEN total_sales END) AS 'June'
+  , sum(CASE WHEN month_of_sale = '07' THEN total_sales END) AS 'July'
+  , sum(CASE WHEN month_of_sale = '08' THEN total_sales END) AS 'August'
+  , sum(CASE WHEN month_of_sale = '09' THEN total_sales END) AS 'September'
+  , sum(CASE WHEN month_of_sale = '10' THEN total_sales END) AS 'October'
+  , sum(CASE WHEN month_of_sale = '11' THEN total_sales END) AS 'November'
+  , sum(CASE WHEN month_of_sale = '12' THEN total_sales END) AS 'December'
+FROM
+  monthly_employee_sales
+GROUP BY
+  firstName, lastName
+;
+
+--query 9: find all sales where the car purchased was electric
+SELECT
+  modelId
+FROM
+  model
+WHERE
+  EngineType='Electric'
+;
+
+SELECT
+    model.model
+  , model.EngineType
+  , inventory.colour
+  , inventory.year
+  , sales.salesAmount
+  , sales.soldDate
+FROM
+  sales
+JOIN
+  inventory
+    ON
+      sales.inventoryId=inventory.inventoryId
+JOIN
+  model
+    ON
+      inventory.modelId=model.modelId
+WHERE
+  inventory.modelId IN (SELECT
+                model.modelId
+              FROM
+                model
+              WHERE
+                EngineType='Electric')
+;
+
+--query 10:get a list of sales people and rank the car models they've sold
+--the most of
+SELECT
+    employee.firstName
+  , employee.lastName
+  , model.model
+  , count(model) as number_sold
+  , rank() OVER (PARTITION BY sales.employeeId
+                  ORDER BY count(model) DESC) as Rank
+FROM
+  sales
+JOIN
+  employee
+    ON
+      sales.employeeId=employee.employeeId
+JOIN
+  inventory
+    ON
+      inventory.inventoryId=sales.inventoryId
+JOIN
+  model
+    ON
+      model.modelId=inventory.modelId
+GROUP BY
+    employee.firstName
+  , employee.lastName
+  , model.model
+;
+
+--query 11: generate a sales report showing total sales per month and an
+--annual running total
+with cte_sales as (
+SELECT
+    strftime('%m',soldDate) as month_of_sale
+  , strftime('%Y',soldDate) as year_of_sale
+  , sum(salesAmount) as salesAmount
+FROM
+  sales
+GROUP BY
+  year_of_sale,month_of_sale
+ORDER BY
+  year_of_sale,month_of_sale
+)
+
+SELECT
+    month_of_sale
+  , year_of_sale
+  , salesAmount
+  , sum(salesAmount) over (PARTITION BY year_of_sale ORDER BY year_of_sale, month_of_sale)
+                        AS annual_sales_running
+FROM
+  cte_sales
+ORDER BY
+    year_of_sale
+  , month_of_sale
+;
+
+--query 12: create a report showing the number of cars sold this month and last month
+SELECT
+    strftime('%Y-%m',soldDate) as month_sold
+  , count(*) as number_sold
+  , LAG (count(*), 1, 0) OVER calMonth AS last_month_cars_sold
+FROM
+  sales
+GROUP BY
+  strftime('%Y-%m',soldDate)
+WINDOW calMonth AS (ORDER BY strftime('%Y-%m', soldDate))
+ORDER BY strftime('%Y-%m',soldDate)
+;
