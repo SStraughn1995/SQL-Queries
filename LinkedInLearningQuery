@@ -1,7 +1,5 @@
 
---Query 1:retrieve a list of employers, including first and last
---names, and the first and last names of their immediate
---managers
+--Query 1:retrieve a list of employers, including first and last names, and the first and last names of their immediate managers
 
 SELECT
     emp.employeeId
@@ -36,8 +34,7 @@ WHERE
 ;
 
 --Query 3:
---retrive list of all sales and all customers even if data has
---been removed
+--retrive list of all sales and all customers even if data has been removed
 SELECT
     cust.firstName
   , cust.lastName
@@ -72,8 +69,7 @@ ORDER BY
 ;
 
 --Query 5:
---list the least and most expensive car sold by each
---employee this year
+--list the least and most expensive car sold by each employee this year
 SELECT
     emp.firstName
   , emp.lastName
@@ -92,8 +88,7 @@ GROUP BY
   emp.firstName
 ;
 
---query 6:list employees who have made more than five
---sales this year
+--query 6:list employees who have made more than five sales this year
 SELECT
     emp.firstName
   , emp.lastName
@@ -136,7 +131,6 @@ GROUP BY
 
 --query 8: create a report that shows the amount of sales per employee for each month in 2021
 --first name, last name, column along top will represent a month,values in grid will show total sales for that month
---CASE statements
 
 WITH monthly_employee_sales as(
 SELECT
@@ -213,8 +207,7 @@ WHERE
                 EngineType='Electric')
 ;
 
---query 10:get a list of sales people and rank the car models they've sold
---the most of
+--query 10:get a list of sales people and rank the car models they've sold the most of
 SELECT
     employee.firstName
   , employee.lastName
@@ -242,8 +235,7 @@ GROUP BY
   , model.model
 ;
 
---query 11: generate a sales report showing total sales per month and an
---annual running total
+--query 11: generate a sales report showing total sales per month and an annual running total
 with cte_sales as (
 SELECT
     strftime('%m',soldDate) as month_of_sale
