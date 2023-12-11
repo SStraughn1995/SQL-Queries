@@ -1,0 +1,30 @@
+--CTE Practice: calculating descriptive stats for monthly reveneu by product
+--provide revenue for 2 different subscriptions (basic and expert) per month. Identify which product had the most success, and identify the consistency of each subscription
+
+with monthly_revs as(
+select
+      date_trunc('month',s.orderdate) as order_month
+    , productname
+    , sum(s.revenue) as revenue
+from
+    subscriptions s
+join
+    products p
+        on s.PRODUCTID=p.PRODUCTID
+where
+    orderdate between '2022-01-01' and '2022-12-31'
+group by
+    date_trunc('month',s.ORDERDATE), productname
+)
+
+select
+    productname,
+    min(revenue) as min_rev,
+    max(revenue) as max_rev,
+    avg(revenue) as avg_rev,
+    stddev(revenue) as std_dev_rev
+from
+    monthly_revs
+group by
+    PRODUCTNAME
+;
