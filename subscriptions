@@ -1,3 +1,4 @@
+--query 1:
 --CTE Practice: calculating descriptive stats for monthly reveneu by product
 --provide revenue for 2 different subscriptions (basic and expert) per month. Identify which product had the most success, and identify the consistency of each subscription
 
@@ -27,4 +28,66 @@ from
     monthly_revs
 group by
     PRODUCTNAME
+;
+
+--query 2:
+--find the distribution of users across the number of times a link was clicked per user
+
+with email_link_clicks as(
+select
+    userid, 
+    count(*) as num_link_clicks
+from
+    frontendeventlog el
+where
+    eventid=5
+group by 
+    userid
+)
+
+select
+    num_link_clicks,
+    count(*) as num_users
+from
+    email_link_clicks
+group by
+    num_link_clicks
+;
+
+--query 3:
+--create a report of customers, the total number of products for that customer, total number of users for that customer, and binary column that flags 1 for an upsell opportunity
+--upsell criteria: have at least 5,000 registered users or only have one product subscription
+
+select
+    customerid,
+    count(customerid) as num_products,
+    sum(numberofusers) as total_users,
+    CASE
+        WHEN count(productid)=1 or sum(numberofusers)>=5000 THEN 1
+        ELSE 0
+    END AS upsell_opportunity
+from
+    subscriptions s
+group by
+    customerid;
+
+--query 4: AB test. track user activity to determine effectiveness of new web design page
+--count the number of times a user completes the following events: viewed help center page, clicked FAQs, clicked Contact Support, and Submitted a Ticket
+
+select
+      userid
+    , sum(case when el.eventid=1 then 1 else 0 end) as ViewedHelpCenterPage
+    , sum(case when el.eventid=2 then 1 else 0 end) as ClickedFAQs
+    , sum(case when el.eventid=3 then 1 else 0 end) as ClickedContactSupport
+    , sum(case when el.eventid=4 then 1 else 0 end) as SubmittedTicket
+from
+    frontendeventlog el
+join
+    frontendeventdefinitions def
+        on
+            el.EVENTID=def.EVENTID
+where
+    eventtype='Customer Support'
+group by
+    userid
 ;
