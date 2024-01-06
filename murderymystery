@@ -1,4 +1,4 @@
---The SQL murder mystery game is a popular website used to practice SQL skill sand concepts and a fun way so solve an intriguing crime! The website can be located at https://mystery.knightlab.com
+--The SQL murder mystery game is a popular website used to practice SQL skills and concepts and a fun way to solve an intriguing crime! The website can be located at https://mystery.knightlab.com
 --background:A crime has taken place and the detective needs your help. The detective gave you the crime scene report, but you somehow lost it. You vaguely remember that the crime scene was a murder that occurred sometime on January 15, 2018 and that it took place in SQL City.
 
 SELECT *
