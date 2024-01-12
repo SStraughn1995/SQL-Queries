@@ -1,4 +1,4 @@
------ data cleaning
+----- data cleaning:
 #identify duplicate records
 select count(*), country, year
 from world_life_expectancy
@@ -75,3 +75,152 @@ join world_life_expectancy t3
     and t1.year=t3.year+1
 set t1.`life expectancy`= round((t2.`life expectancy` + t3.`life expectancy`)/2,1)
 where t1.`life expectancy` = '';
+
+
+
+
+---exploratory data analysis:
+select 
+	  country
+      , min(`life expectancy`)
+      , max(`life expectancy`)
+      , round(max(`life expectancy`) - min(`life expectancy`),1) as life_increase_15_years
+from 
+	world_life_expectancy
+group by 
+	country
+having 
+	min(`life expectancy`) <> 0 AND max(`life expectancy`) <> 0
+order by 
+	life_increase_15_years desc
+;
+    
+select
+	  year
+	, round(avg(`life expectancy`),2)
+from
+	world_life_expectancy
+where
+	`life expectancy` <> 0
+group by
+	year
+order by
+	year
+;
+
+select
+	  country
+	, round(avg(`life expectancy`),1) as avg_life_expectancy
+    , round(avg(GDP),1) as avg_gdp
+from
+	world_life_expectancy
+group by
+	country
+having
+	avg_life_expectancy > 0 and avg_gdp > 0
+order by
+	avg_gdp
+;
+
+select
+	  country
+	, gdp
+    , case
+		when gdp >= 1500 then 'high gdp country'
+        else 'low gdp country'
+	   end as 'gdp status'
+from
+	world_life_expectancy
+;
+
+select 
+	  `gdp status`
+      , count(*)
+      , avg(gdp)
+from (select
+	  country
+	, gdp
+    , case
+		when gdp >= 1500 then 'high gdp country'
+        else 'low gdp country'
+	   end as 'gdp status'
+from
+	world_life_expectancy) as gdp_table
+group by 
+	`gdp status`
+;
+
+select
+	  sum(case when gdp >= 1500 then 1 else 0 end) as high_gdp_count
+	, avg(case when gdp >= 1500 then `life expectancy` else null end) as high_gdp_le
+    , sum(case when gdp <= 1500 then 1 else 0 end) as low_gdp_count
+    , avg(case when gdp <= 1500 then `life expectancy` else null end) as low_gdp_le
+from
+	world_life_expectancy; 
+    
+select
+	count(distinct country)
+    , status
+	, round(avg(`life expectancy`),1)
+from
+	world_life_expectancy
+group by
+	status
+;
+
+select
+	  country
+	, round(avg(bmi),2) as avg_bmi
+    , round(avg(`life expectancy`),2) as avg_le
+from
+	world_life_expectancy
+group by
+	country
+having avg_le > 0 and avg_bmi > 0
+order by avg_bmi desc;
+
+select 
+	  *
+      , round(avg(avg_le) over(),2) as worldwide_avg_expectancy
+from (select
+	  country
+	, round(avg(bmi),2) as avg_bmi
+    , round(avg(`life expectancy`),2) as avg_le
+from
+	world_life_expectancy
+group by
+	country
+having avg_le > 0 and avg_bmi > 0
+order by avg_bmi desc) as bmi_le_table; 
+
+select
+	  *
+	, round(avg_le - worldwide_avg_expectancy,2) as difference
+from (select 
+		*
+		, round(avg(avg_le) over(),2) as worldwide_avg_expectancy
+	from (select
+			  country
+			, round(avg(bmi),2) as avg_bmi
+			, round(avg(`life expectancy`),2) as avg_le
+		from
+			world_life_expectancy
+		group by
+			country
+		having avg_le > 0 and avg_bmi > 0
+		order by avg_bmi desc) as bmi_le_table) as diff_table
+order by difference desc
+limit 10
+;
+
+select
+	  country
+	, year
+    , `life expectancy`
+    , `adult mortality`
+    , sum(`adult mortality`) over (partition by country order by year) as running_total_adult_mortality
+from
+	world_life_expectancy
+where
+	country like '%United%'
+;
