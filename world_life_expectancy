@@ -81,7 +81,7 @@ where t1.`life expectancy` = '';
 
 ---exploratory data analysis:
 select 
-	  country
+	country
       , min(`life expectancy`)
       , max(`life expectancy`)
       , round(max(`life expectancy`) - min(`life expectancy`),1) as life_increase_15_years
@@ -109,9 +109,9 @@ order by
 ;
 
 select
-	  country
+	country
 	, round(avg(`life expectancy`),1) as avg_life_expectancy
-    , round(avg(GDP),1) as avg_gdp
+    	, round(avg(GDP),1) as avg_gdp
 from
 	world_life_expectancy
 group by
@@ -123,18 +123,16 @@ order by
 ;
 
 select
-	  country
+	country
 	, gdp
-    , case
-		when gdp >= 1500 then 'high gdp country'
-        else 'low gdp country'
+   	, case when gdp >= 1500 then 'high gdp country' else 'low gdp country'
 	   end as 'gdp status'
 from
 	world_life_expectancy
 ;
 
 select 
-	  `gdp status`
+	`gdp status`
       , count(*)
       , avg(gdp)
 from (select
@@ -151,10 +149,10 @@ group by
 ;
 
 select
-	  sum(case when gdp >= 1500 then 1 else 0 end) as high_gdp_count
+	sum(case when gdp >= 1500 then 1 else 0 end) as high_gdp_count
 	, avg(case when gdp >= 1500 then `life expectancy` else null end) as high_gdp_le
-    , sum(case when gdp <= 1500 then 1 else 0 end) as low_gdp_count
-    , avg(case when gdp <= 1500 then `life expectancy` else null end) as low_gdp_le
+    	, sum(case when gdp <= 1500 then 1 else 0 end) as low_gdp_count
+    	, avg(case when gdp <= 1500 then `life expectancy` else null end) as low_gdp_le
 from
 	world_life_expectancy; 
     
@@ -169,9 +167,9 @@ group by
 ;
 
 select
-	  country
+	country
 	, round(avg(bmi),2) as avg_bmi
-    , round(avg(`life expectancy`),2) as avg_le
+    	, round(avg(`life expectancy`),2) as avg_le
 from
 	world_life_expectancy
 group by
@@ -180,8 +178,8 @@ having avg_le > 0 and avg_bmi > 0
 order by avg_bmi desc;
 
 select 
-	  *
-      , round(avg(avg_le) over(),2) as worldwide_avg_expectancy
+	*
+	, round(avg(avg_le) over(),2) as worldwide_avg_expectancy
 from (select
 	  country
 	, round(avg(bmi),2) as avg_bmi
