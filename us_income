@@ -1,0 +1,111 @@
+#rename column name
+alter table
+	us_income_stats
+rename column ï»¿id to id;
+
+#identify duplicate records in us_income table
+select 
+	  id
+	, count(id)
+from 
+	us_income
+group by 
+	id
+having 
+	count(id) > 1;
+
+#identify row_ids for duplicate records to remove from table
+select
+	*
+from(
+		select 
+			  row_id
+			, id
+			, row_number() over (partition by id order by id) as row_num
+		from us_income) as row_num_table
+where
+	row_num > 1
+;
+
+#update table to remove ids from previous query
+delete from
+	us_income
+where
+	row_id in (
+				select
+					row_id
+				from(
+						select 
+							  row_id
+							, id
+							, row_number() over (partition by id order by id) as row_num
+						from us_income) as row_num_table
+				where
+					row_num > 1)
+;
+
+#identify duplicate records for us_income_stats table
+select 
+	  id
+	, count(id)
+from 
+	us_income_stats
+group by 
+	id
+having 
+	count(id) > 1;
+    
+#a few state names appeared to be spelled incorrectly/not standardized, so identify a list of unique state names to verify
+select
+	distinct state_name
+from
+	us_income
+;
+
+update 
+	us_income
+set
+	state_name = 'Georgia'
+where 
+	state_name = 'georia'
+;
+
+update
+	us_income
+set 
+	state_name = 'Alabama'
+where
+	state_name = 'alabama'
+;
+
+#check state abbreviations
+select
+	  state_name
+	, state_ab
+from
+	us_income
+group by
+	  state_name
+	, state_ab
+order by
+	state_name
+;
+
+#replace blank "place" field for Autauga County
+update
+	us_income
+set 
+	place = 'Autaugaville'
+where 
+	row_id = 32
+;
+
+#update 'Boroughs' to 'Borough'
+update
+	us_income
+set
+	type = 'Borough'
+where
+	type = 'boroughs'
+;
+
