@@ -1,3 +1,4 @@
+-----data cleaning:
 #rename column name
 alter table
 	us_income_stats
@@ -109,3 +110,95 @@ where
 	type = 'boroughs'
 ;
 
+
+----exploratory analysis:
+#determine sum of land and water area by state, ordered by largest land area descending
+select
+	  state_name
+    , sum(aland)
+    , sum(awater)
+from
+	us_income
+group by
+	state_name
+order by 
+	sum(aland) desc
+;
+
+#determine which rows from us_income did not get imported (import wizard determined not all rows were successfully imported)
+select
+	us_income.id, us_income_stats.id, us_income.state_name, us_income_stats.state_name, mean, median, stdev
+from
+	us_income
+right join
+	us_income_stats
+		on us_income.id = us_income_stats.id
+where
+	us_income.id IS NULL;
+
+#top 10 states by average household income
+select
+	  ui.state_name
+    , round(avg(mean),1)
+    , round(avg(median),1)
+from
+	us_income ui
+		inner join us_income_stats uis
+			on ui.id=uis.id
+where 
+	mean <> 0
+group by
+	  ui.state_name
+order by
+	avg(mean) desc
+limit 10
+;
+
+#explore median incomes by type
+select
+	  type
+	, count(type)
+    , round(avg(mean),1)
+    , round(avg(median),1)
+from 
+	us_income ui
+		inner join us_income_stats uis
+			on ui.id=uis.id
+where
+	mean <> 0
+group by
+	type
+;
+
+#explore US cities and average household income
+select
+	  ui.state_name
+	, city
+    , round(avg(mean),1)
+from us_income ui
+	inner join us_income_stats uis
+		on ui.id=uis.id
+group by
+	  ui.state_name
+	, city
+order by
+	round(avg(mean),1) desc
+;
+
+#explore stats of delaware cities. note: milton was removed due to data quality issue
+select
+	  ui.state_name
+	, city
+    , mean
+    , median
+    , round(avg(mean) over (),0) as state_average
+    , (mean) - (round(avg(mean) over (),0)) as difference
+from
+	us_income ui
+		inner join us_income_stats uis
+			on ui.id=uis.id
+where
+	ui.state_name = 'Delaware' and city <> 'Milton'
+order by
+	difference
+;
